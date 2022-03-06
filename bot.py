@@ -1,10 +1,7 @@
 # bot.py
 # Written by Matthew Circelli
-# Ver: 1.4 - Cleaner embeds!
-# Date: 2/7/2021
-# Desc: Bot that will hopefully track FC stock levels on pings
-# TODO: Show only demand when on a loading mission, vice-versa
-# TODO: deleteFC command or edit FC command
+# Ver: 2-beta - Discord API v10 with slash commands
+# Desc: Bot that tracks fleet carrier stock levels and prices.
 # Refs: Discord.py API: https://discordpy.readthedocs.io/en/latest/api.html#
 # Dev portal: https://discord.com/developers/applications/803357001765617705/bot
 # EDSM stations API: https://www.edsm.net/en/api-system-v1
@@ -21,6 +18,7 @@ import requests
 from bs4 import BeautifulSoup
 from dotenv import find_dotenv, load_dotenv, set_key
 from discord.ext import commands, tasks
+from discord import app_commands
 from datetime import datetime
 import traceback
 
@@ -38,8 +36,10 @@ wmm_interval = int(os.getenv('WMM_INTERVAL', 3600))
 wmm_trigger = False
 intents = discord.Intents.default()
 intents.members = True
+intents.message_content = True
 
 bot = commands.Bot(command_prefix=';', intents=intents)
+slash = app_commands.CommandTree(bot)
 
 if ENV != 'prod':
     # Debugging, used only in dev.
@@ -60,6 +60,12 @@ async def on_ready():
     )
 
     await start_wmm_task()
+    await slash.sync()
+
+
+@slash.command(name='test', description='test command')
+async def slash_test(interaction: discord.Interaction):
+    await interaction.response.send_message('Pong 2!', ephemeral=True)
 
 
 @tasks.loop(seconds=30)
@@ -262,10 +268,9 @@ async def wmm_stock_error(error):
 #    )
 #    print(f'Welcome Message Sent!')
 
-
-@bot.command(name='ping', help='If the bot hasnt crashed, it will respond >pong<')
-async def dingle(ctx):
-    await ctx.send('pong!')
+@slash.command(name='ping', description='If the bot hasnt crashed, it will respond >pong<')
+async def dingle(interaction: discord.Interaction):
+    await interaction.response.send_message('pong!')
     '''
     # Disable EDSM as a stock source.
     # Code to be removed at a later stage.
