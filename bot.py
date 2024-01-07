@@ -618,6 +618,15 @@ async def wmmstatus(ctx):
         await ctx.send(f'wmm stock background task is running.')
 
 
+@bot.hybrid_command(name='wmm_stop', help='Stop the wmm background task')
+@commands.has_any_role('Bot Handler', 'Admin', 'Mod')
+async def wmmstatus(ctx):
+    if wmm_stock.is_running():
+        await ctx.send(f'Stopping wmm stock background task...')
+        await stop_wmm_task()
+    else:
+        await ctx.send(f'wmm stock background task is not running.')
+
 @bot.command(name='capi_enable', help='Enable the use of Frontier cAPI for a carriers stock check.\n'
                                 'FCName: name of an existing fleet carrier(s).\n'
                                 'Multiple carriers can be specified using comma seperation. \n')
@@ -910,6 +919,12 @@ async def start_wmm_task():
     print("Starting WMM stock background task")
     message = await channel.send('Stock Bot initialized, preparing for WMM stock update.')
     wmm_stock.start(message, channel, ccochannel)
+
+
+async def stop_wmm_task():
+    if wmm_stock.is_running():
+        print("Stopping WMM stock background task")
+        wmm_stock.cancel()
 
 
 def chunk(chunk_list, max_size=10):
